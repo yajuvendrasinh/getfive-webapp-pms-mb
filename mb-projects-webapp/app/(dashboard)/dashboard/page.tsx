@@ -13,6 +13,7 @@ export default async function DashboardPage() {
             .or("requirement.neq.not_applicable,requirement.is.null"),
         supabase.from("tasks")
             .select("id", { count: "exact", head: true })
+            .or("requirement.neq.not_applicable,requirement.is.null")
             .eq("status", "completed"),
         supabase.from("tasks")
             .select("id", { count: "exact", head: true })
