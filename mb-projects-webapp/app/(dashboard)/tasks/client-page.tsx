@@ -88,11 +88,11 @@ export function TasksClientPage() {
                 { event: "*", schema: "public", table: "tasks", filter: `project_id=eq.${activeProjectId}` },
                 (payload) => {
                     if (payload.eventType === "INSERT") {
-                        mutate((prev: TaskItem[] = []) => [...prev, payload.new], false);
+                        mutate((prev: TaskItem[] | undefined) => [...(prev || []), payload.new as TaskItem], false);
                     } else if (payload.eventType === "UPDATE") {
-                        mutate((prev: TaskItem[] = []) => prev.map((t: TaskItem) => t.id === payload.new.id ? payload.new : t), false);
+                        mutate((prev: TaskItem[] | undefined) => (prev || []).map((t: TaskItem) => t.id === payload.new.id ? payload.new as TaskItem : t), false);
                     } else if (payload.eventType === "DELETE") {
-                        mutate((prev: TaskItem[] = []) => prev.filter((t: TaskItem) => t.id !== payload.old.id), false);
+                        mutate((prev: TaskItem[] | undefined) => (prev || []).filter((t: TaskItem) => t.id !== payload.old.id), false);
                     }
                 })
             .subscribe();
@@ -105,8 +105,8 @@ export function TasksClientPage() {
     // Task action handlers
     const updateTaskStatus = async (taskId: string, status: string, extras: Record<string, string | null> = {}) => {
         // Optimistic update
-        mutate((prev: TaskItem[] = []) =>
-            prev.map((t: TaskItem) => t.id === taskId ? { ...t, status, ...extras } : t),
+        mutate((prev: TaskItem[] | undefined) =>
+            (prev || []).map((t: TaskItem) => t.id === taskId ? { ...t, status, ...extras } : t),
             false
         );
 
