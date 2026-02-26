@@ -68,13 +68,32 @@ export function TasksClientPage() {
     const { data: tasks = [], mutate } = useSWR<TaskItem[]>(
         activeProjectId ? ["tasks", activeProjectId] : null,
         async ([, projId]: [string, string]) => {
-            const { data } = await supabase
-                .from("tasks")
-                .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
-                .eq("project_id", projId)
-                .neq("requirement", "not_applicable")
-                .limit(5000);
-            return (data as TaskItem[]) || [];
+            let allTasks: TaskItem[] = [];
+            let from = 0;
+            const step = 1000;
+            let keepFetching = true;
+
+            while (keepFetching) {
+                const { data } = await supabase
+                    .from("tasks")
+                    .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
+                    .eq("project_id", projId)
+                    .neq("requirement", "not_applicable")
+                    .range(from, from + step - 1);
+
+                if (data && data.length > 0) {
+                    allTasks = [...allTasks, ...(data as TaskItem[])];
+                    if (data.length < step) {
+                        keepFetching = false;
+                    } else {
+                        from += step;
+                    }
+                } else {
+                    keepFetching = false;
+                }
+            }
+
+            return allTasks;
         },
         { fallbackData: [] }
     );
