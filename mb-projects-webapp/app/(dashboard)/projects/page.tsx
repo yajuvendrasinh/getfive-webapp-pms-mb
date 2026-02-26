@@ -1,39 +1,6 @@
-import { createClient } from "@/utils/supabase/server";
 import { ProjectsClientPage } from "./client-page";
 
-export default async function ProjectsPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Fetch user role
-    const { data: userData } = await supabase
-        .from("users")
-        .select("role, email")
-        .eq("email", user?.email)
-        .single();
-
-    const role = userData?.role || "employee";
-
-    // Fetch projects
-    let projects = [];
-    if (role === "admin" || role === "master_admin") {
-        const { data } = await supabase
-            .from("projects")
-            .select("*")
-            .order("created_at", { ascending: false });
-        projects = data || [];
-    } else {
-        // For RM/employees, fetch all projects (they will be filtered/shown appropriately)
-        const { data } = await supabase
-            .from("projects")
-            .select("*")
-            .order("created_at", { ascending: false });
-        projects = data || [];
-    }
-
-    // Fetch all users for team assignment dropdowns
-    const { data: allUsers } = await supabase.from("users").select("name, email, role");
-
+export default function ProjectsPage() {
     return (
         <div className="space-y-6">
             <div>
@@ -43,11 +10,7 @@ export default async function ProjectsPage() {
                 </p>
             </div>
 
-            <ProjectsClientPage
-                initialProjects={projects}
-                userRole={role}
-                allUsers={allUsers || []}
-            />
+            <ProjectsClientPage />
         </div>
     );
 }

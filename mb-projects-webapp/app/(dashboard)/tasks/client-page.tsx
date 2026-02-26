@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type User } from "@supabase/supabase-js";
+import useSWR from "swr";
 
 // Types
 type Project = { id: string | number; Project_Name: string; Start_Date: string | null; Status: string };
@@ -29,57 +29,82 @@ function calculateCurrentWeek(startDate: string | null): number {
     return Math.max(1, Math.ceil(diffDays / 7));
 }
 
-export function TasksClientPage({ initialProjects }: { initialProjects: Project[]; user: User | null }) {
-    const [activeProjectId, setActiveProjectId] = useState<string>(
-        initialProjects.length > 0 ? initialProjects[0].id.toString() : ""
-    );
-    const [tasks, setTasks] = useState<TaskItem[]>([]);
-    const [loading, setLoading] = useState(false);
+export function TasksClientPage() {
     const supabase = useMemo(() => createClient(), []);
 
-    // Get active project's start date
-    const activeProject = initialProjects.find(p => p.id.toString() === activeProjectId);
+    // 1. Fetch Session
+    const { data: session } = useSWR("session", async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) return { user: null, role: "employee" };
+        const { data: userData } = await supabase.from("users").select("role").eq("email", user.email).single();
+        return { user, role: userData?.role || "employee" };
+    });
+    const user = session?.user || null;
+    const role = session?.role || "employee";
+
+    // 2. Fetch Projects (for the dropdown)
+    const { data: projects = [] } = useSWR("tasks-projects", async () => {
+        if (role === "admin" || role === "master_admin") {
+            const { data } = await supabase.from("projects").select("id, Project_Name, Start_Date, Status");
+            return data || [];
+        } else {
+            const { data } = await supabase.from("projects").select("id, Project_Name, Start_Date, Status");
+            return data || [];
+        }
+    });
+
+    const [activeProjectId, setActiveProjectId] = useState<string>("");
+    const activeProject = projects.find((p: Project) => p.id.toString() === activeProjectId);
     const currentWeek = calculateCurrentWeek(activeProject?.Start_Date ?? null);
 
+    // Set initial active project if not set once projects load
+    useEffect(() => {
+        if (!activeProjectId && projects.length > 0) {
+            setActiveProjectId(projects[0].id.toString());
+        }
+    }, [projects, activeProjectId]);
 
+    // 3. Fetch Tasks
+    const { data: tasks = [], mutate } = useSWR(
+        activeProjectId ? ["tasks", activeProjectId] : null,
+        async ([, projId]: [string, string]) => {
+            const { data } = await supabase.from("tasks").select("*").eq("project_id", projId);
+            return data || [];
+        },
+        { fallbackData: [] }
+    );
+    // 4. Realtime Subscription for tasks
     useEffect(() => {
         if (!activeProjectId) return;
 
-        // Fetch tasks
-        const controller = new AbortController();
-        supabase
-            .from("tasks")
-            .select("*")
-            .eq("project_id", activeProjectId)
-            .then(({ data }) => {
-                if (!controller.signal.aborted && data) setTasks(data);
-                setLoading(false);
-            });
-
-        // Realtime subscription
         const channel = supabase
             .channel(`tasks-rt-${activeProjectId}`)
             .on("postgres_changes",
                 { event: "*", schema: "public", table: "tasks", filter: `project_id=eq.${activeProjectId}` },
                 (payload) => {
                     if (payload.eventType === "INSERT") {
-                        setTasks(prev => [...prev, payload.new]);
+                        mutate((prev: TaskItem[] = []) => [...prev, payload.new], false);
                     } else if (payload.eventType === "UPDATE") {
-                        setTasks(prev => prev.map(t => t.id === payload.new.id ? payload.new : t));
+                        mutate((prev: TaskItem[] = []) => prev.map((t: TaskItem) => t.id === payload.new.id ? payload.new : t), false);
                     } else if (payload.eventType === "DELETE") {
-                        setTasks(prev => prev.filter(t => t.id !== payload.old.id));
+                        mutate((prev: TaskItem[] = []) => prev.filter((t: TaskItem) => t.id !== payload.old.id), false);
                     }
                 })
             .subscribe();
 
         return () => {
-            controller.abort();
             supabase.removeChannel(channel);
         };
-    }, [activeProjectId, supabase]);
+    }, [activeProjectId, supabase, mutate]);
 
     // Task action handlers
     const updateTaskStatus = async (taskId: string, status: string, extras: Record<string, string | null> = {}) => {
+        // Optimistic update
+        mutate((prev: TaskItem[] = []) =>
+            prev.map((t: TaskItem) => t.id === taskId ? { ...t, status, ...extras } : t),
+            false
+        );
+
         await supabase
             .from("tasks")
             .update({ status, ...extras })
@@ -99,20 +124,26 @@ export function TasksClientPage({ initialProjects }: { initialProjects: Project[
         updateTaskStatus(taskId, "in_progress");
 
     // Filter tasks into buckets (mirrors dashboard.js logic)
-    const visibleTasks = tasks.filter(t => t.requirement !== "not_applicable");
+    const visibleTasks = tasks.filter((t: TaskItem) => t.requirement !== "not_applicable");
+    const activeProjectTasks = tasks.filter((t: TaskItem) => t.requirement !== "not_applicable");
 
-    const actionRequired = visibleTasks.filter(t =>
-        t.status === "in_progress" ||
-        t.status === "on_hold" ||
-        t.status === "awaiting_approval" ||
-        (t.status === "pending" && t.targetWeek < currentWeek)
+    const thisWeek = activeProjectTasks.filter((t: TaskItem) => {
+        const d = calculateCurrentWeek(t.created_at);
+        return d === currentWeek && t.status !== "completed";
+    });
+
+    // Check if task exists in thisWeek
+    const isThisWeek = (t: TaskItem) => thisWeek.some((w: TaskItem) => w.id === t.id);
+
+    // action required tasks: action_required == true AND not completed AND NOT in this week
+    const actionRequired = activeProjectTasks.filter((t: TaskItem) =>
+        t.action_required === true &&
+        t.status !== "completed" &&
+        !isThisWeek(t)
     );
 
-    const thisWeek = visibleTasks.filter(t =>
-        t.status === "pending" && t.targetWeek === currentWeek
-    );
-
-    const completed = visibleTasks.filter(t => t.status === "completed");
+    // completed tasks
+    const completed = activeProjectTasks.filter((t: TaskItem) => t.status === "completed");
 
     // Scorecard
     const totalTasks = visibleTasks.length;
@@ -128,7 +159,7 @@ export function TasksClientPage({ initialProjects }: { initialProjects: Project[
                         <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
                     <SelectContent>
-                        {initialProjects.map(p => (
+                        {projects.map((p: Project) => (
                             <SelectItem key={p.id} value={p.id.toString()}>
                                 {p.Project_Name} {p.Status === "on_hold" ? "(On Hold)" : ""}
                             </SelectItem>
@@ -181,12 +212,10 @@ export function TasksClientPage({ initialProjects }: { initialProjects: Project[
                 </TabsList>
 
                 <TabsContent value="action-required" className="mt-4 space-y-3">
-                    {loading ? (
-                        <p className="text-sm text-slate-400 py-8 text-center">Loading tasks...</p>
-                    ) : actionRequired.length === 0 ? (
+                    {actionRequired.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No action required ✓</p>
                     ) : (
-                        actionRequired.map(task => (
+                        actionRequired.map((task: TaskItem) => (
                             <TaskCard key={task.id} task={task} currentWeek={currentWeek}
                                 onStart={handleStart} onComplete={handleComplete}
                                 onHold={handleHold} onResume={handleResume} />
@@ -195,12 +224,10 @@ export function TasksClientPage({ initialProjects }: { initialProjects: Project[
                 </TabsContent>
 
                 <TabsContent value="this-week" className="mt-4 space-y-3">
-                    {loading ? (
-                        <p className="text-sm text-slate-400 py-8 text-center">Loading tasks...</p>
-                    ) : thisWeek.length === 0 ? (
+                    {thisWeek.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No tasks for Week {currentWeek}</p>
                     ) : (
-                        thisWeek.map(task => (
+                        thisWeek.map((task: TaskItem) => (
                             <TaskCard key={task.id} task={task} currentWeek={currentWeek}
                                 onStart={handleStart} onComplete={handleComplete}
                                 onHold={handleHold} onResume={handleResume} />
@@ -209,12 +236,10 @@ export function TasksClientPage({ initialProjects }: { initialProjects: Project[
                 </TabsContent>
 
                 <TabsContent value="completed" className="mt-4 space-y-3">
-                    {loading ? (
-                        <p className="text-sm text-slate-400 py-8 text-center">Loading tasks...</p>
-                    ) : completed.length === 0 ? (
+                    {completed.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No completed tasks yet.</p>
                     ) : (
-                        completed.map(task => (
+                        completed.map((task: TaskItem) => (
                             <TaskCard key={task.id} task={task} currentWeek={currentWeek}
                                 onStart={handleStart} onComplete={handleComplete}
                                 onHold={handleHold} onResume={handleResume} />

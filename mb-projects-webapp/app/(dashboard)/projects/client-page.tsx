@@ -18,22 +18,43 @@ import {
 } from "@/components/ui/select";
 import { Building2, Calendar, Users, Clock, FolderPlus, X } from "lucide-react";
 
+import useSWR from "swr";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ProjectItem = Record<string, any>;
 type UserItem = { name: string; email: string; role: string };
 
-interface ProjectsClientPageProps {
-    initialProjects: ProjectItem[];
-    userRole: string;
-    allUsers: UserItem[];
-}
-
-export function ProjectsClientPage({ initialProjects, userRole, allUsers }: ProjectsClientPageProps) {
-    const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
+export function ProjectsClientPage() {
     const supabase = useMemo(() => createClient(), []);
     const searchParams = useSearchParams();
 
+    // Fetch user and role
+    const { data: sessionData } = useSWR("session", async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) return { user: null, role: "employee" };
+        const { data: userData } = await supabase.from("users").select("role").eq("email", user.email).single();
+        return { user, role: userData?.role || "employee" };
+    });
+
+    const userRole = sessionData?.role || "employee";
     const isAdmin = userRole === "admin" || userRole === "master_admin";
+
+    // Fetch all users
+    const { data: allUsers = [] } = useSWR("allUsers", async () => {
+        const { data } = await supabase.from("users").select("name, email, role");
+        return data || [];
+    });
+
+    // Fetch projects
+    const { data: projects = [], mutate } = useSWR(
+        "projects",
+        async () => {
+            const { data } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+            return data || [];
+        },
+        { fallbackData: [] }
+    );
+
     const [showAddForm, setShowAddForm] = useState(false);
 
     useEffect(() => {
@@ -41,6 +62,30 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
             setShowAddForm(true);
         }
     }, [searchParams, isAdmin]);
+
+    // Setup realtime subscription
+    useEffect(() => {
+        const channel = supabase
+            .channel("projects-rt")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "projects" },
+                (payload) => {
+                    if (payload.eventType === "INSERT") {
+                        mutate((prev: ProjectItem[] = []) => [payload.new, ...prev], false);
+                    } else if (payload.eventType === "UPDATE") {
+                        mutate((prev: ProjectItem[] = []) => prev.map((p) => (p.id === payload.new.id ? payload.new : p)), false);
+                    } else if (payload.eventType === "DELETE") {
+                        mutate((prev: ProjectItem[] = []) => prev.filter((p) => p.id !== payload.old.id), false);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase, mutate]);
 
     const [addLoading, setAddLoading] = useState(false);
     const [newProject, setNewProject] = useState({
@@ -69,10 +114,14 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
         if (newStatus === "completed") {
             updates.completionTime = new Date().toISOString();
         }
-        await supabase.from("projects").update(updates).eq("id", projectId);
-        setProjects(prev =>
-            prev.map(p => p.id === projectId ? { ...p, Project_Status: newStatus, Status: newStatus } : p)
+
+        // Optimistic update
+        mutate((prev: ProjectItem[] = []) =>
+            prev.map(p => p.id === projectId ? { ...p, ...updates } : p),
+            false
         );
+
+        await supabase.from("projects").update(updates).eq("id", projectId);
     };
 
     const generateProjectId = () => {
@@ -109,7 +158,7 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
             const { error } = await supabase.from("projects").insert(projectData);
             if (error) throw error;
 
-            setProjects(prev => [projectData, ...prev]);
+            mutate((prev: ProjectItem[] = []) => [projectData, ...prev], false);
             setNewProject({ Project_Name: "", Start_Date: "", Project_RM: "", Project_FDD: "", Project_Sec: "", Project_PC: "", Project_AM: "" });
             setShowAddForm(false);
         } catch (e: unknown) {
@@ -187,7 +236,7 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="__none__">None</SelectItem>
-                                                {allUsers.map((u) => (
+                                                {allUsers.map((u: UserItem) => (
                                                     <SelectItem key={u.email} value={u.email}>
                                                         {u.name} ({u.email})
                                                     </SelectItem>
@@ -229,7 +278,7 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
                     {activeProjects.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No active projects.</p>
                     ) : (
-                        activeProjects.map(project => (
+                        activeProjects.map((project: ProjectItem) => (
                             <ProjectCard key={project.id} project={project} isAdmin={isAdmin}
                                 onStatusChange={handleStatusChange} />
                         ))
@@ -240,7 +289,7 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
                     {onHoldProjects.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No projects on hold.</p>
                     ) : (
-                        onHoldProjects.map(project => (
+                        onHoldProjects.map((project: ProjectItem) => (
                             <ProjectCard key={project.id} project={project} isAdmin={isAdmin}
                                 onStatusChange={handleStatusChange} />
                         ))
@@ -251,7 +300,7 @@ export function ProjectsClientPage({ initialProjects, userRole, allUsers }: Proj
                     {completedProjects.length === 0 ? (
                         <p className="text-sm text-slate-500 py-8 text-center italic">No completed projects.</p>
                     ) : (
-                        completedProjects.map(project => (
+                        completedProjects.map((project: ProjectItem) => (
                             <ProjectCard key={project.id} project={project} isAdmin={isAdmin}
                                 onStatusChange={handleStatusChange} />
                         ))
