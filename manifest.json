@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1vmnFb8lCEpJIuBt4LXpGHgsK7M7twoKXh9WitTmofXCBMBtZZKnepG0WRo+fGYMXL9gBoyMRwyGimqK26WyTp/xkCqBpuxhIKvH3nOSpBBnq3od7XMaQ/FW3juabY7NiSOjqsGIx0Xv7973W6lTFyDsdYDUvctqdUrxCLth64Yrpj1MQMnX6mwyFwpdDAefKmj6GCRLH9VkRQsAzp4QinutyKHz81pupUdVRciSLBGChEqKtV1gW3Y9CxbbKbZNk8hwruxpwCkLXYOpnpA3kWlQG2X59L+QzQxNt8IMUYmzbCVAL2wyq3fae2r+ZVnMkPUcwOQXTjKd+alX1nDi4wIDAQAB",
+  "name": "MB tracker",
+  "version": "1.0",
+  "description": "Task management dashboard for Merchant Bank employees.",
+  "permissions": [
+    "identity",
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://*.supabase.co/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Command Center"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "oauth2": {
+    "client_id": "431860779602-5k4td20gstpmbqj03vf536m48v1tioi3.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "dashboard.html",
+        "supabase_setup.js",
+        "styles.css",
+        "dashboard.js",
+        "libs/supabase.min.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
