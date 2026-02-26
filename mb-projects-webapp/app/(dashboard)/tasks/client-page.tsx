@@ -20,6 +20,16 @@ type Project = { id: string | number; Project_Name: string; Start_Date: string |
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TaskItem = Record<string, any>;
 
+interface TaskData {
+    kpis: {
+        total: number;
+        completed: number;
+        overdue: number;
+    };
+    activeTasks: TaskItem[];
+    completedTasks: TaskItem[];
+}
+
 function calculateCurrentWeek(startDate: string | null): number {
     if (!startDate) return 1;
     const start = new Date(startDate);
@@ -65,38 +75,53 @@ export function TasksClientPage() {
     }, [projects, activeProjectId]);
 
     // 3. Fetch Tasks
-    const { data: tasks = [], mutate } = useSWR<TaskItem[]>(
-        activeProjectId ? ["tasks", activeProjectId] : null,
-        async ([, projId]: [string, string]) => {
-            let allTasks: TaskItem[] = [];
-            let from = 0;
-            const step = 1000;
-            let keepFetching = true;
-
-            while (keepFetching) {
-                const { data } = await supabase
-                    .from("tasks")
+    const { data: tasksData, mutate } = useSWR<TaskData | null>(
+        activeProjectId ? ["tasks-data", activeProjectId, currentWeek] : null,
+        async ([, projId, cWeek]: [string, string, number]): Promise<TaskData> => {
+            const [totalRes, doneRes, overdueRes, activeRes, completedRes] = await Promise.all([
+                supabase.from("tasks")
+                    .select("id", { count: "exact", head: true })
+                    .eq("project_id", projId)
+                    .neq("requirement", "not_applicable"),
+                supabase.from("tasks")
+                    .select("id", { count: "exact", head: true })
+                    .eq("project_id", projId)
+                    .neq("requirement", "not_applicable")
+                    .eq("status", "completed"),
+                supabase.from("tasks")
+                    .select("id", { count: "exact", head: true })
+                    .eq("project_id", projId)
+                    .neq("requirement", "not_applicable")
+                    .eq("status", "pending")
+                    .lt("targetWeek", cWeek),
+                supabase.from("tasks")
                     .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
                     .eq("project_id", projId)
                     .neq("requirement", "not_applicable")
-                    .range(from, from + step - 1);
+                    .neq("status", "completed")
+                    .limit(1000),
+                supabase.from("tasks")
+                    .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
+                    .eq("project_id", projId)
+                    .neq("requirement", "not_applicable")
+                    .eq("status", "completed")
+                    .order("created_at", { ascending: false })
+                    .limit(100)
+            ]);
 
-                if (data && data.length > 0) {
-                    allTasks = [...allTasks, ...(data as TaskItem[])];
-                    if (data.length < step) {
-                        keepFetching = false;
-                    } else {
-                        from += step;
-                    }
-                } else {
-                    keepFetching = false;
-                }
-            }
-
-            return allTasks;
+            return {
+                kpis: {
+                    total: totalRes.count || 0,
+                    completed: doneRes.count || 0,
+                    overdue: overdueRes.count || 0
+                },
+                activeTasks: (activeRes.data as TaskItem[]) || [],
+                completedTasks: (completedRes.data as TaskItem[]) || []
+            };
         },
-        { fallbackData: [] }
+        { fallbackData: null }
     );
+
     // 4. Realtime Subscription for tasks
     useEffect(() => {
         if (!activeProjectId) return;
@@ -105,14 +130,8 @@ export function TasksClientPage() {
             .channel(`tasks-rt-${activeProjectId}`)
             .on("postgres_changes",
                 { event: "*", schema: "public", table: "tasks", filter: `project_id=eq.${activeProjectId}` },
-                (payload) => {
-                    if (payload.eventType === "INSERT") {
-                        mutate((prev: TaskItem[] | undefined) => [...(prev || []), payload.new as TaskItem], false);
-                    } else if (payload.eventType === "UPDATE") {
-                        mutate((prev: TaskItem[] | undefined) => (prev || []).map((t: TaskItem) => t.id === payload.new.id ? payload.new as TaskItem : t), false);
-                    } else if (payload.eventType === "DELETE") {
-                        mutate((prev: TaskItem[] | undefined) => (prev || []).filter((t: TaskItem) => t.id !== payload.old.id), false);
-                    }
+                () => {
+                    mutate();
                 })
             .subscribe();
 
@@ -124,15 +143,43 @@ export function TasksClientPage() {
     // Task action handlers
     const updateTaskStatus = async (taskId: string, status: string, extras: Record<string, string | null> = {}) => {
         // Optimistic update
-        mutate((prev: TaskItem[] | undefined) =>
-            (prev || []).map((t: TaskItem) => t.id === taskId ? { ...t, status, ...extras } : t),
-            false
-        );
+        mutate((prev: TaskData | null | undefined) => {
+            if (!prev) return prev;
+            const act = [...prev.activeTasks];
+            const cmp = [...prev.completedTasks];
+            const kpis = { ...prev.kpis };
+
+            const actIdx = act.findIndex(t => t.id === taskId);
+            if (actIdx > -1) {
+                if (status === "completed") {
+                    const [t] = act.splice(actIdx, 1);
+                    cmp.unshift({ ...t, status, ...extras });
+                    kpis.completed += 1;
+                } else {
+                    act[actIdx] = { ...act[actIdx], status, ...extras };
+                }
+            } else {
+                const cmpIdx = cmp.findIndex(t => t.id === taskId);
+                if (cmpIdx > -1) {
+                    if (status !== "completed") {
+                        const [t] = cmp.splice(cmpIdx, 1);
+                        act.push({ ...t, status, ...extras });
+                        kpis.completed = Math.max(0, kpis.completed - 1);
+                    } else {
+                        cmp[cmpIdx] = { ...cmp[cmpIdx], status, ...extras };
+                    }
+                }
+            }
+
+            return { kpis, activeTasks: act, completedTasks: cmp };
+        }, false);
 
         await supabase
             .from("tasks")
             .update({ status, ...extras })
             .eq("id", taskId);
+
+        mutate();
     };
 
     const handleStart = (taskId: string) =>
@@ -147,32 +194,20 @@ export function TasksClientPage() {
     const handleResume = (taskId: string) =>
         updateTaskStatus(taskId, "in_progress");
 
-    // Filter tasks into buckets (mirrors dashboard.js logic)
-    const visibleTasks = tasks.filter((t: TaskItem) => t.requirement !== "not_applicable");
-    const activeProjectTasks = tasks.filter((t: TaskItem) => t.requirement !== "not_applicable");
+    // Computed Data
+    const data = tasksData || { kpis: { total: 0, completed: 0, overdue: 0 }, activeTasks: [], completedTasks: [] };
+    const { kpis, activeTasks, completedTasks: completed } = data;
 
-    const thisWeek = activeProjectTasks.filter((t: TaskItem) => {
-        const d = calculateCurrentWeek(t.created_at);
-        return d === currentWeek && t.status !== "completed";
-    });
-
-    // Check if task exists in thisWeek
-    const isThisWeek = (t: TaskItem) => thisWeek.some((w: TaskItem) => w.id === t.id);
-
-    // action required tasks: action_required == true AND not completed AND NOT in this week
-    const actionRequired = activeProjectTasks.filter((t: TaskItem) =>
-        t.action_required === true &&
-        t.status !== "completed" &&
-        !isThisWeek(t)
+    const actionRequired = activeTasks.filter((t: TaskItem) =>
+        t.status === "in_progress" ||
+        t.status === "on_hold" ||
+        t.status === "awaiting_approval" ||
+        (t.status === "pending" && t.targetWeek < currentWeek)
     );
 
-    // completed tasks
-    const completed = activeProjectTasks.filter((t: TaskItem) => t.status === "completed");
-
-    // Scorecard
-    const totalTasks = visibleTasks.length;
-    const completedCount = completed.length;
-    const overdueCount = visibleTasks.filter((t: TaskItem) => t.status === "pending" && t.targetWeek < currentWeek).length;
+    const thisWeek = activeTasks.filter((t: TaskItem) =>
+        t.status === "pending" && t.targetWeek === currentWeek
+    );
 
     return (
         <div className="space-y-6">
@@ -199,15 +234,15 @@ export function TasksClientPage() {
                     </div>
                     <div className="rounded-md border px-3 py-1.5 text-center">
                         <p className="text-xs text-slate-500">Total</p>
-                        <p className="font-semibold">{totalTasks}</p>
+                        <p className="font-semibold">{kpis.total}</p>
                     </div>
                     <div className="rounded-md border px-3 py-1.5 text-center">
                         <p className="text-xs text-slate-500">Done</p>
-                        <p className="font-semibold text-green-600">{completedCount}</p>
+                        <p className="font-semibold text-green-600">{kpis.completed}</p>
                     </div>
                     <div className="rounded-md border px-3 py-1.5 text-center">
                         <p className="text-xs text-slate-500">Overdue</p>
-                        <p className="font-semibold text-red-600">{overdueCount}</p>
+                        <p className="font-semibold text-red-600">{kpis.overdue}</p>
                     </div>
                 </div>
             </div>
