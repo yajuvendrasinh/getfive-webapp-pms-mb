@@ -65,7 +65,7 @@ export function TasksClientPage() {
     }, [projects, activeProjectId]);
 
     // 3. Fetch Tasks
-    const { data: tasks = [], mutate } = useSWR(
+    const { data: tasks = [], mutate } = useSWR<TaskItem[]>(
         activeProjectId ? ["tasks", activeProjectId] : null,
         async ([, projId]: [string, string]) => {
             const { data } = await supabase
@@ -74,7 +74,7 @@ export function TasksClientPage() {
                 .eq("project_id", projId)
                 .neq("requirement", "not_applicable")
                 .limit(5000);
-            return data || [];
+            return (data as TaskItem[]) || [];
         },
         { fallbackData: [] }
     );
