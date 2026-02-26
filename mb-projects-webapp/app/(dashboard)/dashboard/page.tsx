@@ -9,15 +9,18 @@ export default async function DashboardPage() {
 
     const [totalRes, completedRes, pendingRes, overdueRes, d3DataRes] = await Promise.all([
         supabase.from("tasks")
-            .select("id", { count: "exact", head: true }),
+            .select("id", { count: "exact", head: true })
+            .or("requirement.neq.not_applicable,requirement.is.null"),
         supabase.from("tasks")
             .select("id", { count: "exact", head: true })
             .eq("status", "completed"),
         supabase.from("tasks")
             .select("id", { count: "exact", head: true })
+            .or("requirement.neq.not_applicable,requirement.is.null")
             .in("status", ["pending", "in_progress"]),
         supabase.from("tasks")
             .select("id", { count: "exact", head: true })
+            .or("requirement.neq.not_applicable,requirement.is.null")
             .neq("status", "completed")
             .lt("deadline", now),
         // NOTE: For 50,000+ rows, the below query downloading tasks for D3 charts will become a memory bottleneck. 
@@ -25,6 +28,7 @@ export default async function DashboardPage() {
         // to return pre-tallied arrays instead of downloading the raw rows to JavaScript.
         supabase.from("tasks")
             .select("id, taskName, status, deadline, actualAssigneeEmail, phase, targetWeek")
+            .or("requirement.neq.not_applicable,requirement.is.null")
             .order("created_at", { ascending: false })
             .limit(5000)
     ]);

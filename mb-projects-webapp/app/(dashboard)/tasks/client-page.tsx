@@ -82,28 +82,28 @@ export function TasksClientPage() {
                 supabase.from("tasks")
                     .select("id", { count: "exact", head: true })
                     .eq("project_id", projId)
-                    .neq("requirement", "not_applicable"),
+                    .or("requirement.neq.not_applicable,requirement.is.null"),
                 supabase.from("tasks")
                     .select("id", { count: "exact", head: true })
                     .eq("project_id", projId)
-                    .neq("requirement", "not_applicable")
+                    .or("requirement.neq.not_applicable,requirement.is.null")
                     .eq("status", "completed"),
                 supabase.from("tasks")
                     .select("id", { count: "exact", head: true })
                     .eq("project_id", projId)
-                    .neq("requirement", "not_applicable")
+                    .or("requirement.neq.not_applicable,requirement.is.null")
                     .eq("status", "pending")
                     .lt("targetWeek", cWeek),
                 supabase.from("tasks")
                     .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
                     .eq("project_id", projId)
-                    .neq("requirement", "not_applicable")
+                    .or("requirement.neq.not_applicable,requirement.is.null")
                     .neq("status", "completed")
                     .limit(1000),
                 supabase.from("tasks")
                     .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
                     .eq("project_id", projId)
-                    .neq("requirement", "not_applicable")
+                    .or("requirement.neq.not_applicable,requirement.is.null")
                     .eq("status", "completed")
                     .order("created_at", { ascending: false })
                     .limit(100)
