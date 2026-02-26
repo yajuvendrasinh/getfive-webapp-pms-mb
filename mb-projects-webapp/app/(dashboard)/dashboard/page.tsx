@@ -4,30 +4,44 @@ import { DashboardClientPage } from "./client-page";
 export default async function DashboardPage() {
     const supabase = await createClient();
 
-    // Fetch all tasks
-    let allTasks: any[] = [];
-    let from = 0;
-    const step = 1000;
-    let keepFetching = true;
+    // KPI: Total, Completed, Pending, Overdue
+    const now = new Date().toISOString();
 
-    while (keepFetching) {
-        const { data } = await supabase
-            .from("tasks")
-            .select("id, status, deadline, actualAssigneeEmail, phase, targetWeek")
+    const [totalRes, completedRes, pendingRes, overdueRes, d3DataRes] = await Promise.all([
+        supabase.from("tasks")
+            .select("id", { count: "exact", head: true })
+            .neq("requirement", "not_applicable"),
+        supabase.from("tasks")
+            .select("id", { count: "exact", head: true })
+            .neq("requirement", "not_applicable")
+            .eq("status", "completed"),
+        supabase.from("tasks")
+            .select("id", { count: "exact", head: true })
+            .neq("requirement", "not_applicable")
+            .in("status", ["pending", "in_progress"]),
+        supabase.from("tasks")
+            .select("id", { count: "exact", head: true })
+            .neq("requirement", "not_applicable")
+            .neq("status", "completed")
+            .lt("deadline", now),
+        // NOTE: For 50,000+ rows, the below query downloading tasks for D3 charts will become a memory bottleneck. 
+        // TODO: In the future, create a Supabase RPC aggregation function to group by "actualAssigneeEmail" and "targetWeek", 
+        // to return pre-tallied arrays instead of downloading the raw rows to JavaScript.
+        supabase.from("tasks")
+            .select("id, taskName, status, deadline, actualAssigneeEmail, phase, targetWeek")
+            .neq("requirement", "not_applicable")
             .order("created_at", { ascending: false })
-            .range(from, from + step - 1);
+            .limit(5000)
+    ]);
 
-        if (data && data.length > 0) {
-            allTasks = [...allTasks, ...data];
-            if (data.length < step) {
-                keepFetching = false;
-            } else {
-                from += step;
-            }
-        } else {
-            keepFetching = false;
-        }
-    }
+    const kpis = {
+        total: totalRes.count || 0,
+        completed: completedRes.count || 0,
+        pending: pendingRes.count || 0,
+        overdue: overdueRes.count || 0,
+    };
+
+    const chartTasks = d3DataRes.data || [];
 
     // Fetch basic project info for mapping IDs to names if needed
     const { data: projects } = await supabase
@@ -44,7 +58,8 @@ export default async function DashboardPage() {
             </div>
 
             <DashboardClientPage
-                initialTasks={allTasks}
+                kpiData={kpis}
+                initialTasks={chartTasks}
                 projects={projects || []}
             />
         </div>

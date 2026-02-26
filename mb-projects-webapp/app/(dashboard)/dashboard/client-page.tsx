@@ -30,27 +30,18 @@ interface Project {
 }
 
 interface DashboardClientPageProps {
+    kpiData: {
+        total: number;
+        completed: number;
+        pending: number;
+        overdue: number;
+    };
     initialTasks: Task[];
     projects: Project[];
 }
 
-export function DashboardClientPage({ initialTasks, projects }: DashboardClientPageProps) {
-    // 1. Calculate Summary Metrics
-    const metrics = useMemo(() => {
-        const now = new Date();
-        const total = initialTasks.length;
-        const completed = initialTasks.filter(t => t.status === "completed").length;
-        const pending = initialTasks.filter(t => t.status === "pending" || t.status === "in_progress").length;
-        const overdue = initialTasks.filter(t => {
-            if (t.status === "completed") return false;
-            if (!t.deadline) return false;
-            return new Date(t.deadline) < now;
-        }).length;
-
-        return { total, completed, pending, overdue };
-    }, [initialTasks]);
-
-    // 2. Prepare Data for Charts
+export function DashboardClientPage({ kpiData, initialTasks, projects }: DashboardClientPageProps) {
+    // 1. D3 Chart logic follows...
     const workloadData = useMemo(() => {
         const counts: Record<string, number> = {};
         initialTasks.forEach(t => {
@@ -197,7 +188,7 @@ export function DashboardClientPage({ initialTasks, projects }: DashboardClientP
                         <ListTodo className="h-4 w-4 text-slate-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{metrics.total}</div>
+                        <div className="text-2xl font-bold">{kpiData.total}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -206,9 +197,9 @@ export function DashboardClientPage({ initialTasks, projects }: DashboardClientP
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{metrics.completed}</div>
+                        <div className="text-2xl font-bold">{kpiData.completed}</div>
                         <p className="text-xs text-slate-500 mt-1">
-                            {Math.round((metrics.completed / metrics.total) * 100 || 0)}% completion rate
+                            {Math.round((kpiData.completed / (kpiData.total || 1)) * 100 || 0)}% completion rate
                         </p>
                     </CardContent>
                 </Card>
@@ -218,7 +209,7 @@ export function DashboardClientPage({ initialTasks, projects }: DashboardClientP
                         <Clock className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{metrics.pending}</div>
+                        <div className="text-2xl font-bold">{kpiData.pending}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-red-100 bg-red-50/10">
@@ -227,7 +218,7 @@ export function DashboardClientPage({ initialTasks, projects }: DashboardClientP
                         <AlertCircle className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-700">{metrics.overdue}</div>
+                        <div className="text-2xl font-bold text-red-700">{kpiData.overdue}</div>
                     </CardContent>
                 </Card>
             </div>
