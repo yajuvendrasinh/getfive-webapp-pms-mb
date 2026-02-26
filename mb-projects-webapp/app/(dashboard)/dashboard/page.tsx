@@ -5,10 +5,29 @@ export default async function DashboardPage() {
     const supabase = await createClient();
 
     // Fetch all tasks
-    const { data: tasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false });
+    let allTasks: any[] = [];
+    let from = 0;
+    const step = 1000;
+    let keepFetching = true;
+
+    while (keepFetching) {
+        const { data } = await supabase
+            .from("tasks")
+            .select("id, status, deadline, actualAssigneeEmail, phase, targetWeek")
+            .order("created_at", { ascending: false })
+            .range(from, from + step - 1);
+
+        if (data && data.length > 0) {
+            allTasks = [...allTasks, ...data];
+            if (data.length < step) {
+                keepFetching = false;
+            } else {
+                from += step;
+            }
+        } else {
+            keepFetching = false;
+        }
+    }
 
     // Fetch basic project info for mapping IDs to names if needed
     const { data: projects } = await supabase
@@ -25,7 +44,7 @@ export default async function DashboardPage() {
             </div>
 
             <DashboardClientPage
-                initialTasks={tasks || []}
+                initialTasks={allTasks}
                 projects={projects || []}
             />
         </div>
