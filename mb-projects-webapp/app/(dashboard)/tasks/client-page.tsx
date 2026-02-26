@@ -68,7 +68,12 @@ export function TasksClientPage() {
     const { data: tasks = [], mutate } = useSWR(
         activeProjectId ? ["tasks", activeProjectId] : null,
         async ([, projId]: [string, string]) => {
-            const { data } = await supabase.from("tasks").select("*").eq("project_id", projId);
+            const { data } = await supabase
+                .from("tasks")
+                .select("id, project_id, taskName, status, targetWeek, phase, actualAssigneeEmail, requirement, created_at, action_required")
+                .eq("project_id", projId)
+                .neq("requirement", "not_applicable")
+                .limit(5000);
             return data || [];
         },
         { fallbackData: [] }
@@ -148,7 +153,7 @@ export function TasksClientPage() {
     // Scorecard
     const totalTasks = visibleTasks.length;
     const completedCount = completed.length;
-    const overdueCount = visibleTasks.filter(t => t.status === "pending" && t.targetWeek < currentWeek).length;
+    const overdueCount = visibleTasks.filter((t: TaskItem) => t.status === "pending" && t.targetWeek < currentWeek).length;
 
     return (
         <div className="space-y-6">
