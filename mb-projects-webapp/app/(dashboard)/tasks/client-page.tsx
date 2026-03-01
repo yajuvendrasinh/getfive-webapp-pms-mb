@@ -239,14 +239,14 @@ export function TasksClientPage() {
 
         await supabase
             .from("tasks")
-            .update({ status, ...extras, updated_at: getISTDate() })
+            .update({ status, ...extras })
             .eq("id", taskId);
 
         mutate();
     };
 
     const handleAssignChange = async (taskId: string, email: string) => {
-        await supabase.from("tasks").update({ actualAssigneeEmail: email, updated_at: getISTDate() }).eq("id", taskId);
+        await supabase.from("tasks").update({ actualAssigneeEmail: email }).eq("id", taskId);
         mutate();
     };
 
@@ -494,7 +494,7 @@ export function TasksClientPage() {
                     remarks={activeTasks.find(t => t.id === remarksTaskId)?.remarks || completed.find(t => t.id === remarksTaskId)?.remarks || []}
                     onClose={() => setRemarksTaskId(null)}
                     onSave={async (newRemarks) => {
-                        await supabase.from("tasks").update({ remarks: newRemarks, updated_at: getISTDate() }).eq("id", remarksTaskId);
+                        await supabase.from("tasks").update({ remarks: newRemarks }).eq("id", remarksTaskId);
                         mutate();
                     }}
                 />

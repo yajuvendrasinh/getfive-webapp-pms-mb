@@ -185,8 +185,7 @@ export function ProjectsClientPage({ initialUser, initialRole }: ProjectsClientP
 
     const handleStatusChange = async (projectId: string, newStatus: string) => {
         const updates: Record<string, string | null> = {
-            Project_Status: newStatus,
-            updated_at: getISTDate()
+            Project_Status: newStatus
         };
         if (newStatus === "completed") {
             updates.completionTime = getISTDate();
@@ -236,8 +235,7 @@ export function ProjectsClientPage({ initialUser, initialRole }: ProjectsClientP
                 Project_CDD: newProject.Project_CDD,
                 Project_PC: newProject.Project_PC,
                 Project_AM: newProject.Project_AM,
-                created_at: getISTDate(),
-                updated_at: getISTDate(),
+                created_at: getISTDate()
             };
 
             const { data, error } = await supabase.from("projects").insert([projectData]).select();
