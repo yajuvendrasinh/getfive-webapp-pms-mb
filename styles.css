@@ -1,0 +1,1104 @@
+:root {
+    --primary-color: #0F2027;
+    --secondary-color: #203A43;
+    --accent-color: #2C5364;
+    --text-color: #ffffff;
+    --highlight-color: #ff9800;
+    /* Orange for Action Required */
+    --success-color: #4caf50;
+    --bg-color: #f4f4f9;
+    --sidebar-width: 250px;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: #333;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Login Screen */
+#login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to right, #0F2027, #203A43, #2C5364);
+    color: white;
+}
+
+#google-login-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: white;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* App Layout */
+#app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.user-profile {
+    text-align: center;
+}
+
+#user-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 2px solid white;
+}
+
+.project-selector select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+/* RM Controls */
+#rm-controls {
+    border-top: 1px solid #444;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #2196F3;
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Workspace */
+.workspace {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #ecf0f1;
+}
+
+section {
+    margin-bottom: 30px;
+}
+
+h2 {
+    border-bottom: 2px solid #bdc3c7;
+    padding-bottom: 10px;
+    color: #2c3e50;
+}
+
+.task-list {
+    display: grid;
+    gap: 10px;
+}
+
+.task-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid transparent;
+}
+
+.task-card.priority {
+    border-left-color: var(--highlight-color);
+}
+
+.task-card.completed {
+    border-left-color: var(--success-color);
+    opacity: 0.7;
+}
+
+.task-info h4 {
+    margin: 0 0 5px 0;
+}
+
+.task-info p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.task-actions button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+}
+
+.btn-start {
+    background-color: #2196F3;
+}
+
+.btn-complete {
+    background-color: #4caf50;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 400px;
+    border-radius: 8px;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.team-role-input,
+.form-field {
+    margin-bottom: 10px;
+}
+
+.team-role-input label,
+.form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.team-role-input input,
+.form-field input,
+.form-field select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Sidebar buttons */
+#rm-controls button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    width: 100%;
+    font-size: 14px;
+}
+
+#manage-team-btn {
+    background-color: #2196F3;
+}
+
+#add-user-btn {
+    background-color: #4caf50;
+}
+
+#add-project-btn {
+    background-color: #ff9800;
+}
+
+/* Modal save buttons */
+#save-team-btn,
+#save-user-btn,
+#save-project-btn {
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 15px;
+    width: 100%;
+    font-size: 14px;
+}
+
+#save-user-btn {
+    background-color: #4caf50;
+}
+
+#save-project-btn {
+    background-color: #ff9800;
+}
+
+#save-team-btn:hover,
+#save-user-btn:hover,
+#save-project-btn:hover {
+    opacity: 0.9;
+}
+
+/* Wider modal for project form */
+.modal-wide {
+    width: 550px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Two-column form rows */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-field {
+    flex: 1;
+}
+
+/* Autocomplete suggestions */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.autocomplete-list.active {
+    display: block;
+}
+
+.autocomplete-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.autocomplete-item:hover {
+    background-color: #e8f0fe;
+}
+
+.autocomplete-item .item-name {
+    font-weight: 600;
+}
+
+.autocomplete-item .item-email {
+    color: #666;
+    font-size: 12px;
+}
+
+/* Assign Tasks dropdown on task cards */
+.assign-dropdown {
+    padding: 8px 12px;
+    border: 2px solid #e67e22;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 160px;
+    outline: none;
+}
+
+.assign-dropdown:focus {
+    border-color: #d35400;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+#assign-tasks-btn {
+    width: 100%;
+    margin-top: 6px;
+}
+
+/* Completed Tasks Section */
+.completed-tasks-container {
+    margin-top: 2rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+
+#toggle-completed-btn {
+    width: 100%;
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+    margin-bottom: 1rem;
+}
+
+#completed-tasks-list .task-card {
+    opacity: 0.7;
+    background-color: #f9f9f9;
+}
+
+.btn-hold {
+    background-color: #f39c12;
+    margin-left: 5px;
+}
+
+.btn-hold:hover {
+    background-color: #d35400;
+}
+
+.btn-resume {
+    background-color: #3498db;
+}
+
+.btn-resume:hover {
+    background-color: #2980b9;
+}
+
+/* Sidebar Scorecard */
+.user-scorecard {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #ecf0f1;
+}
+
+.user-scorecard h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 5px;
+}
+
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.score-row span:last-child {
+    font-weight: bold;
+}
+
+.score-row.highlight {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+    font-size: 16px;
+    color: #f1c40f;
+    /* Gold color for score */
+}
+
+/* Compact Task Card Styles */
+.task-card {
+    padding: 12px;
+}
+
+.task-header-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.task-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+    flex: 1;
+    margin-right: 10px;
+    line-height: 1.3;
+}
+
+.task-meta {
+    font-size: 11px;
+    color: #7f8c8d;
+    background: #ecf0f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.task-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    /* Align assignee with buttons */
+}
+
+.assignee-info {
+    font-size: 11px;
+    color: #7f8c8d;
+    background: #ecf0f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.assignee-info .label {
+    display: none;
+    /* Ensure label is hidden if re-added in HTML by mistake, though removed there */
+}
+
+.actions-status-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.task-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.status-label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 4px;
+    text-align: right;
+    letter-spacing: 0.5px;
+}
+
+.status-label.pending {
+    color: #f39c12;
+}
+
+.status-label.in_progress {
+    color: #3498db;
+}
+
+.status-label.completed {
+    color: #27ae60;
+}
+
+.status-label.awaiting_approval {
+    color: #9b59b6;
+    /* Purple color for visibility */
+}
+
+/* Stacked Assignee & Status */
+.assignee-status-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+/* Override Status Label for Left Stacking */
+.status-label {
+    text-align: left;
+    margin-top: 2px;
+    margin-left: 2px;
+}
+
+/* Ensure buttons stay right aligned */
+.task-actions {
+    margin-left: auto;
+}
+
+.status-label.on_hold {
+    color: #e67e22;
+}
+
+/* =========================================
+   DASHBOARD STYLES
+   ========================================= */
+
+#dashboard-view {
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #bdc3c7;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #3498db;
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px #3498db;
+}
+
+input:checked+.slider:before {
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* =========================================
+   REMARKS / COMMENTS FEATURE
+   ========================================= */
+
+/* Remark Icon Button on Task Card */
+.remark-btn {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 6px;
+    line-height: 1;
+    border-radius: 6px;
+    color: #7f8c8d;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.remark-btn:hover {
+    background: #ecf0f1;
+    color: #2c3e50;
+}
+
+/* Red dot indicator when remarks exist */
+.remark-btn.has-remarks::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    background: #e74c3c;
+    border-radius: 50%;
+    border: 1.5px solid white;
+}
+
+/* Remarks Modal */
+.remarks-modal-content {
+    width: 480px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.remarks-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    background: #f8f9fa;
+    position: relative;
+}
+
+.remarks-modal-header .close-modal {
+    position: absolute;
+    right: 16px;
+    top: 10px;
+    float: none;
+    font-size: 22px;
+}
+
+.remarks-icon-large {
+    font-size: 22px;
+}
+
+.remarks-modal-header h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    border: none;
+    padding: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 360px;
+}
+
+/* Remarks Thread (scrollable list) */
+.remarks-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 120px;
+    max-height: 340px;
+    background: #fdfdfd;
+}
+
+.remarks-thread .empty-remarks {
+    color: #aaa;
+    font-size: 13px;
+    text-align: center;
+    margin: auto;
+    padding: 20px 0;
+}
+
+/* Individual Remark Bubble */
+.remark-bubble {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 10px 13px;
+    border-left: 3px solid #3498db;
+}
+
+.remark-bubble.own-remark {
+    background: #f0fff4;
+    border-left-color: #27ae60;
+}
+
+.remark-bubble-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.remark-author {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.remark-time {
+    font-size: 11px;
+    color: #95a5a6;
+}
+
+.remark-text {
+    font-size: 13px;
+    color: #34495e;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* Remarks Input Area */
+.remarks-input-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid #ecf0f1;
+    background: #f8f9fa;
+}
+
+#remark-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #dce1e7;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    background: white;
+}
+
+#remark-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.btn-send-remark {
+    padding: 9px 18px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.btn-send-remark:hover {
+    background: #2980b9;
+}
+
+.btn-send-remark:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+/* =========================================
+   REQUIREMENT FIELD DROPDOWN
+   ========================================= */
+
+.requirement-select {
+    padding: 7px 10px;
+    border: 2px solid #8e44ad;
+    border-radius: 6px;
+    background: #fff;
+    color: #6c3483;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 160px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.requirement-select:focus,
+.requirement-select:hover {
+    border-color: #6c3483;
+    box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.15);
+}
+
+/* =========================================
+   MANAGE PROJECTS STYLES
+   ========================================= */
+
+#manage-projects-view table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+#manage-projects-view th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    color: #7f8c8d;
+    font-size: 11px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #eee;
+}
+
+#manage-projects-view td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    color: #2c3e50;
+    vertical-align: middle;
+}
+
+.manage-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-start {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.btn-start:hover {
+    background-color: #27ae60;
+}
+
+.btn-complete {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-complete:hover {
+    background-color: #c0392b;
+}
+
+.btn-approve {
+    background-color: #27ae60;
+    /* Match start color */
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: #229954;
+}
+
+.btn-hold-small {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-hold-small:hover {
+    background-color: #d35400;
+}
+
+/* =========================================
+   MULTI-SELECT DROPDOWN
+   ========================================= */
+
+.multi-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.multi-select-header {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 35px;
+}
+
+.multi-select-text {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+    color: #333;
+}
+
+.multi-select-header:hover {
+    border-color: #999;
+}
+
+.multi-select-icon {
+    font-size: 12px;
+    color: #666;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.multi-select-option {
+    padding: 6px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.multi-select-option:hover {
+    background-color: #e8f0fe;
+}
+
+.form-field .multi-select-container input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}

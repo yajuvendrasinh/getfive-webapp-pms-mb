@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MB tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="login-container" class="hidden">
+        <h1>MB tracker Login</h1>
+        <button id="google-login-btn">Sign in with Google</button>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <aside class="sidebar">
+            <div id="sidebar-main-content">
+                <div class="user-profile">
+                    <img id="user-photo" src="" alt="User Photo">
+                    <h3 id="user-name">Loading...</h3>
+                    <p id="user-role">Role: ...</p>
+                </div>
+
+                <div class="project-selector">
+                    <label for="active-project">Active Project</label>
+                    <select id="active-project">
+                        <option value="" disabled selected>Select Project</option>
+                    </select>
+                </div>
+
+                <div id="user-scorecard" class="user-scorecard">
+                    <h4>My Performance</h4>
+                    <div class="score-row">
+                        <span>Total Tasks:</span> <span id="score-total">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span>Completed:</span> <span id="score-completed">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span>Overdue (Pending):</span> <span id="score-overdue">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span>Completed Late:</span> <span id="score-late">0</span>
+                    </div>
+                    <div class="score-row highlight">
+                        <span>Score:</span> <span id="score-final">0</span>
+                    </div>
+                </div>
+
+                <!-- RM Only Controls -->
+                <div id="rm-controls" class="hidden">
+                    <button id="manage-team-btn">Manage Team</button>
+                    <button id="assign-tasks-btn">Assign Tasks</button>
+                    <div class="toggle-container">
+                        <span>My Tasks</span>
+                        <label class="switch">
+                            <input type="checkbox" id="team-feed-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Team Feed</span>
+                    </div>
+                </div>
+
+                <!-- Admin Only Controls -->
+                <div id="admin-controls" class="hidden">
+                    <button id="add-user-btn">+ Add User</button>
+                    <button id="add-project-btn">+ Add Project</button>
+                    <button id="manage-projects-btn">Manage Projects</button>
+                </div>
+
+            </div>
+            <!-- View Toggle (Bottom of Sidebar) -->
+            <div id="view-toggle-container" class="hidden"
+                style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <label class="switch">
+                    <input type="checkbox" id="dashboard-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span style="color: white; font-size: 14px; margin-left: 10px;">Dashboard View</span>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <!-- Dashboard View Container -->
+            <div id="dashboard-view" class="hidden">
+                <div class="dashboard-header">
+                    <h2>Project Dashboard</h2>
+                    <div style="display:flex; gap:10px;">
+                        <select id="time-filter-select" class="project-select">
+                            <option value="all">Total Project Tasks</option>
+                            <option value="last-week">Till Last Week</option>
+                            <option value="this-week">Till This Week</option>
+                        </select>
+                        <select id="report-type-select" class="project-select">
+                            <option value="project">Project Overview</option>
+                            <option value="employee">Employee Performance</option>
+                        </select>
+                        <select id="dashboard-project-select" class="project-select hidden">
+                            <option value="" disabled selected>Select Project</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="dashboard-content">
+                    <!-- Stats injected here -->
+                </div>
+            </div>
+
+            <section id="action-required-section">
+                <h2>Action Required</h2>
+                <div id="action-required-list" class="task-list">
+                    <!-- Tasks injected here -->
+                </div>
+            </section>
+
+            <section id="this-week-section">
+                <h2>This Week</h2>
+                <div id="this-week-list" class="task-list">
+                    <!-- Tasks injected here -->
+                </div>
+            </section>
+
+            <div class="completed-tasks-container">
+                <div class="extra-task-toggles" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="toggle-completed-btn" class="secondary-btn">Show Completed Tasks</button>
+                    <button id="show-next-week-btn" class="secondary-btn hidden">Show Next Week Tasks</button>
+                </div>
+                <div id="completed-tasks-list" class="task-list hidden">
+                    <!-- Completed tasks injected here -->
+                </div>
+                <div id="next-week-tasks-list" class="task-list hidden">
+                    <!-- Next week tasks injected here -->
+                </div>
+            </div>
+
+            <!-- Manage Projects View Container -->
+            <div id="manage-projects-view" class="hidden" style="padding: 20px;">
+                <div class="dashboard-header"
+                    style="border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Manage Projects</h2>
+                    <button id="back-to-dashboard-btn" class="secondary-btn">← Back to Dashboard</button>
+                </div>
+
+                <div id="active-projects-list">
+                    <!-- Active and On Hold projects injected here -->
+                </div>
+
+                <div class="completed-projects-container" style="margin-top: 40px;">
+                    <button id="toggle-completed-projects-btn" class="secondary-btn">Show Completed Projects (Last 30
+                        Days)</button>
+                    <div id="completed-projects-list" class="hidden" style="margin-top: 20px;">
+                        <!-- Completed projects injected here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- RM Manage Team Modal -->
+    <div id="manage-team-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Manage Team</h2>
+            <div id="team-mapping-form">
+                <!-- Dynamically populated team roles -->
+            </div>
+            <button id="save-team-btn">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="add-user-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="close-add-user-modal">&times;</span>
+            <h2>Add New User</h2>
+            <div id="add-user-form">
+                <div class="form-field">
+                    <label for="new-user-name">Name</label>
+                    <input type="text" id="new-user-name" placeholder="Full Name" required>
+                </div>
+                <div class="form-field">
+                    <label for="new-user-email">Email</label>
+                    <input type="email" id="new-user-email" placeholder="user@company.com" required>
+                </div>
+                <div class="form-field">
+                    <label for="new-user-role">Role</label>
+                    <select id="new-user-role">
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                        <option value="RM">Project RM</option>
+                        <option value="FDD">Financial Due Diligence</option>
+                        <option value="Sec">Secretarial</option>
+                        <option value="PC">Project Coordinator</option>
+                        <option value="AM">Assistant Manager</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="new-user-project">Assigned Project</label>
+                    <input type="text" id="new-user-project" placeholder="Project ID (optional)">
+                </div>
+            </div>
+            <button id="save-user-btn">Save User</button>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div id="add-project-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <span class="close-modal" id="close-add-project-modal">&times;</span>
+            <h2>Add New Project</h2>
+            <div id="add-project-form">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="proj-id">Project ID (Auto)</label>
+                        <input type="text" id="proj-id" readonly style="background:#eee; cursor:not-allowed;">
+                    </div>
+                    <div class="form-field">
+                        <label for="proj-name">Project Name</label>
+                        <input type="text" id="proj-name" placeholder="Company Name / IPO Name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="proj-start-date">Start Date</label>
+                        <input type="date" id="proj-start-date" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="proj-status">Project Status</label>
+                        <select id="proj-status">
+                            <option value="active">Active</option>
+                            <option value="on_hold">On Hold</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 style="margin: 15px 0 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                    Team Members</h3>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="proj-rm">RM</label>
+                        <select id="proj-rm">
+                            <option value="">-- Select RM --</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="proj-fdd">FDD</label>
+                        <div class="multi-select-container" id="proj-fdd-container">
+                            <div class="multi-select-header">
+                                <span class="multi-select-text" id="proj-fdd-text">-- Select FDD --</span>
+                                <span class="multi-select-icon">&#9662;</span>
+                            </div>
+                            <div class="multi-select-dropdown hidden" id="proj-fdd-dropdown">
+                                <!-- Checkboxes injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="proj-sec">Sec</label>
+                        <div class="multi-select-container" id="proj-sec-container">
+                            <div class="multi-select-header">
+                                <span class="multi-select-text" id="proj-sec-text">-- Select Sec --</span>
+                                <span class="multi-select-icon">&#9662;</span>
+                            </div>
+                            <div class="multi-select-dropdown hidden" id="proj-sec-dropdown">
+                                <!-- Checkboxes injected here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="proj-pc">PC</label>
+                        <div class="multi-select-container" id="proj-pc-container">
+                            <div class="multi-select-header">
+                                <span class="multi-select-text" id="proj-pc-text">-- Select PC --</span>
+                                <span class="multi-select-icon">&#9662;</span>
+                            </div>
+                            <div class="multi-select-dropdown hidden" id="proj-pc-dropdown">
+                                <!-- Checkboxes injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="proj-am">AM</label>
+                        <div class="multi-select-container" id="proj-am-container">
+                            <div class="multi-select-header">
+                                <span class="multi-select-text" id="proj-am-text">-- Select AM --</span>
+                                <span class="multi-select-icon">&#9662;</span>
+                            </div>
+                            <div class="multi-select-dropdown hidden" id="proj-am-dropdown">
+                                <!-- Checkboxes injected here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-field"></div>
+                </div>
+
+                <h3 style="margin: 15px 0 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                    Additional Members</h3>
+                <div class="form-row">
+                    <div class="form-field autocomplete-wrapper">
+                        <label for="proj-add1">Additional Member 1</label>
+                        <input type="text" id="proj-add1" placeholder="Type to search..." autocomplete="off">
+                        <div class="autocomplete-list" id="proj-add1-suggestions"></div>
+                    </div>
+                    <div class="form-field autocomplete-wrapper">
+                        <label for="proj-add2">Additional Member 2</label>
+                        <input type="text" id="proj-add2" placeholder="Type to search..." autocomplete="off">
+                        <div class="autocomplete-list" id="proj-add2-suggestions"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field autocomplete-wrapper">
+                        <label for="proj-add3">Additional Member 3</label>
+                        <input type="text" id="proj-add3" placeholder="Type to search..." autocomplete="off">
+                        <div class="autocomplete-list" id="proj-add3-suggestions"></div>
+                    </div>
+                    <div class="form-field"></div>
+                </div>
+            </div>
+            <button id="save-project-btn">Create Project</button>
+        </div>
+    </div>
+
+    <!-- Remarks Modal -->
+    <div id="remarks-modal" class="modal hidden">
+        <div class="modal-content remarks-modal-content">
+            <span class="close-modal" id="close-remarks-modal">&times;</span>
+            <div class="remarks-modal-header">
+                <span class="remarks-icon-large">💬</span>
+                <h2 id="remarks-task-name">Task Remarks</h2>
+            </div>
+            <div id="remarks-thread" class="remarks-thread">
+                <!-- Remarks injected here -->
+            </div>
+            <div class="remarks-input-area">
+                <textarea id="remark-input" placeholder="Add a remark or comment..." rows="2"></textarea>
+                <button id="send-remark-btn" class="btn-send-remark">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Graph Modal -->
+    <div id="employee-graph-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <span class="close-modal" id="close-emp-graph-modal">&times;</span>
+            <div class="dashboard-header"
+                style="padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:15px;">
+                <h2 id="emp-graph-title" style="margin:0;">Employee Performance Graph</h2>
+                <div id="emp-graph-subtitle" style="font-size:12px; color:#7f8c8d; margin-top:5px;"></div>
+            </div>
+            <div style="width: 100%; max-width: 800px; margin: 0 auto; height: 400px; position: relative;">
+                <canvas id="emp-performance-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="libs/chart.umd.js"></script>
+
+    <!-- Supabase JS Client (Local) -->
+    <script src="libs/supabase.min.js"></script>
+
+    <!-- Initialize Supabase -->
+    <script src="supabase_setup.js"></script> 
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
